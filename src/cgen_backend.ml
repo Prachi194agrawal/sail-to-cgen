@@ -63,11 +63,25 @@ let print_hardware out_channel =
      list_registers out_channel defs*)
 
 (* Called in sail.ml *)
+
+let rec list_registers out_channel = function
+  | [] -> ()
+  | (DEF_reg_dec reg) :: defs ->
+      print_string (Pretty_print_sail.to_string (Pretty_print_sail.doc_dec reg));
+      print_newline ();
+      print_hardware out_channel;
+      list_registers out_channel defs
+  | (DEF_mapdef mapdef) :: defs ->
+      do_mapdef_registers out_channel mapdef;
+      list_registers out_channel defs
+  | def :: defs ->
+      list_registers out_channel defs
+
+(* Called in sail.ml *)
 let create_file out_name (Defs defs) =
   let ochannel = open_out out_name in
     try
-    (*list_registers ochannel defs;*)
-      print_hardware ochannel;
+      list_registers ochannel defs;
       close_out ochannel
     with
-      _ -> close_out ochannel
+    | ex -> close_out ochannel; raise ex
